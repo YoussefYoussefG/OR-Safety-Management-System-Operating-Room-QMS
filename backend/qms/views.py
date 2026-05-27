@@ -4,11 +4,26 @@ from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .models import Standard, Incident, Notification
+from .models import Standard, Incident, Notification, OperationLog
 from .serializers import (
     StandardSerializer, IncidentSerializer, 
-    UserSerializer, RegisterSerializer, NotificationSerializer
+    UserSerializer, RegisterSerializer, NotificationSerializer,
+    OperationLogSerializer
 )
+
+class OperationLogViewSet(viewsets.ModelViewSet):
+    queryset = OperationLog.objects.all().order_by('-recorded_at')
+    serializer_class = OperationLogSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def perform_create(self, serializer):
+        log = serializer.save(user=self.request.user)
+        # Create notification for successful log
+        Notification.objects.create(
+            user=self.request.user,
+            title="Checklist Logged",
+            message=f"You successfully logged an operation checklist with {log.completion_rate}% completion."
+        )
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -69,10 +84,19 @@ def dashboard_stats(request):
     # Simple logic for compliance score
     # Base 100, minus 5 for every open incident, clamped at 0
     compliance_score = max(0, 100 - (open_incidents * 5))
+
+    # Add average completion rate from Operation Logs
+    operation_logs = OperationLog.objects.all()
+    avg_completion = 100
+    if operation_logs.exists():
+        avg_completion = sum(log.completion_rate for log in operation_logs) / operation_logs.count()
+        # Combine the scores
+        compliance_score = (compliance_score + avg_completion) / 2
     
     return Response({
-        "compliance_score": compliance_score,
+        "compliance_score": round(compliance_score, 1),
         "total_incidents": total_incidents,
         "open_incidents": open_incidents,
+        "total_operations": operation_logs.count(),
         "system_status": "Healthy" if open_incidents == 0 else "Attention Needed"
     })

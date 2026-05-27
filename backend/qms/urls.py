@@ -3,13 +3,15 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
     StandardViewSet, IncidentViewSet, dashboard_stats,
-    RegisterView, CurrentUserView, NotificationViewSet
+    RegisterView, CurrentUserView, NotificationViewSet,
+    OperationLogViewSet
 )
 
 router = DefaultRouter()
 router.register(r'standards', StandardViewSet)
 router.register(r'incidents', IncidentViewSet)
 router.register(r'notifications', NotificationViewSet, basename='notification')
+router.register(r'operations', OperationLogViewSet, basename='operation')
 
 urlpatterns = [
     path('auth/register/', RegisterView.as_view(), name='auth_register'),

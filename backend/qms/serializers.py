@@ -1,6 +1,11 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Standard, Incident, Notification, DoctorProfile
+from .models import Standard, Incident, Notification, DoctorProfile, OperationLog
+
+class OperationLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OperationLog
+        fields = '__all__'
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
     class Meta:

@@ -32,6 +32,15 @@ class Standard(models.Model):
     def __str__(self):
         return f"{self.title} ({self.version})"
 
+class OperationLog(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='operation_logs', null=True, blank=True)
+    completion_rate = models.IntegerField()
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Operation by {self.user.username if self.user else 'Unknown'} - {self.completion_rate}%"
+
 class Incident(models.Model):
     SEVERITY_CHOICES = [
         ('LOW', 'Low'),

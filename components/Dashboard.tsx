@@ -27,6 +27,7 @@ const Dashboard: React.FC = () => {
     compliance_score: 97.2,
     total_incidents: 3,
     open_incidents: 0,
+    total_operations: 0,
     system_status: "Healthy"
   });
 
@@ -59,8 +60,8 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Compliance Score', value: `${stats.compliance_score}%`, icon: Shield, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Total Reports', value: stats.total_incidents, icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Pending Audits', value: '3', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+            { label: 'Total Operations', value: stats.total_operations, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+            { label: 'Total Reports', value: stats.total_incidents, icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50' },
           { label: 'Active Alerts', value: stats.open_incidents, icon: AlertTriangle, color: 'text-rose-600', bg: 'bg-rose-50' },
         ].map((kpi, idx) => (
           <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">

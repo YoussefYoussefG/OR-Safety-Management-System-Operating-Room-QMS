@@ -86,3 +86,8 @@ export const markNotificationRead = async (id: string) => {
     const response = await api.patch(`/notifications/${id}/`, { is_read: true });
     return response.data;
 };
+
+export const logOperation = async (completionRate: number) => {
+    const response = await api.post('/operations/', { completion_rate: completionRate });
+    return response.data;
+};

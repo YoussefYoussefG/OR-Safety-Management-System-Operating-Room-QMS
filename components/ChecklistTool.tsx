@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CheckSquare, Square, Save, RotateCcw } from 'lucide-react';
 import { ChecklistItem } from '../types';
+import { logOperation } from '../services/api';
 
 const INITIAL_ITEMS: ChecklistItem[] = [
   { id: '1', text: 'Patient identity, site, procedure confirmed', phase: 'Pre-op', completed: false },
@@ -18,6 +19,8 @@ const INITIAL_ITEMS: ChecklistItem[] = [
 const ChecklistTool: React.FC = () => {
   const [items, setItems] = useState<ChecklistItem[]>(INITIAL_ITEMS);
   const [activeTab, setActiveTab] = useState<'Pre-op' | 'Intra-op' | 'Post-op'>('Pre-op');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
 
   const toggleItem = (id: string) => {
     setItems(items.map(item => item.id === id ? { ...item, completed: !item.completed } : item));
@@ -25,6 +28,24 @@ const ChecklistTool: React.FC = () => {
 
   const filteredItems = items.filter(item => item.phase === activeTab);
   const completionRate = Math.round((items.filter(i => i.completed).length / items.length) * 100);
+
+  const handleFinalize = async () => {
+    setIsSubmitting(true);
+    setMessage('');
+    try {
+      await logOperation(completionRate);
+      setMessage('Operation logged successfully!');
+      setTimeout(() => {
+        setItems(INITIAL_ITEMS); // Reset after successful log
+        setMessage('');
+        setActiveTab('Pre-op');
+      }, 2000);
+    } catch (error) {
+      setMessage('Failed to log operation. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -79,18 +100,27 @@ const ChecklistTool: React.FC = () => {
         ))}
       </div>
 
-      <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-        <button
-          onClick={() => setItems(INITIAL_ITEMS)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors"
-        >
-          <RotateCcw size={18} />
-          Reset Checklist
-        </button>
-        <button className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm">
-          <Save size={18} />
-          Finalize & Log
-        </button>
+      <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <div className="text-sm font-semibold text-emerald-600">
+          {message}
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setItems(INITIAL_ITEMS)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors"
+          >
+            <RotateCcw size={18} />
+            Reset Checklist
+          </button>
+          <button 
+            onClick={handleFinalize}
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
+          >
+            <Save size={18} />
+            {isSubmitting ? 'Logging...' : 'Finalize & Log'}
+          </button>
+        </div>
       </div>
     </div>
   );
