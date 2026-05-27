@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { analyzeRisk } from '../services/geminiService';
 import { AlertCircle, Brain, Loader2, CheckCircle2, ShieldAlert, Info } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const RiskAuditor: React.FC = () => {
   const [scenario, setScenario] = useState('');
@@ -10,6 +11,7 @@ const RiskAuditor: React.FC = () => {
   const handleAnalyze = async () => {
     if (!scenario.trim()) return;
     setLoading(true);
+    setResult(null);
     try {
       const data = await analyzeRisk(scenario);
       setResult(data);
@@ -27,52 +29,54 @@ const RiskAuditor: React.FC = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
       <div className="lg:col-span-1 space-y-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 text-blue-600 mb-4">
-            <Brain size={24} />
-            <h2 className="text-xl font-bold">AI Risk Auditor</h2>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full">
+          <div className="flex items-center gap-3 text-blue-600 mb-6">
+            <div className="p-2 bg-blue-50 rounded-xl">
+              <Brain size={24} />
+            </div>
+            <h2 className="text-xl font-bold text-slate-800">AI Risk Auditor</h2>
           </div>
 
-          <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4 text-xs text-blue-800">
-            <div className="flex gap-2 mb-1 font-bold">
-              <Info size={14} />
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100/50 mb-6 shadow-inner">
+            <div className="flex items-center gap-2 mb-2 font-bold text-blue-800 text-sm">
+              <Info size={16} />
               QMS Challenge: Subjectivity
             </div>
-            Traditional risk assessment is subjective and reactive. This tool uses AI to standardize risk scoring and propose immediate remediation.
+            <p className="text-xs text-blue-700/80 leading-relaxed">
+              Traditional risk assessment is subjective and reactive. This tool uses AI to standardize risk scoring and propose immediate remediation.
+            </p>
           </div>
 
-          <p className="text-slate-500 text-sm mb-6">
-            Input a scenario or observation to resolve QMS challenges using the AI-assisted resolution engine.
-          </p>
-
-          <div className="space-y-4">
+          <div className="flex-1 flex flex-col space-y-4">
             <textarea
-              className="w-full h-32 p-3 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="Describe the incident or finding..."
+              className="w-full flex-1 min-h-[150px] p-4 text-sm border-2 border-slate-100 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none shadow-sm placeholder:text-slate-400"
+              placeholder="Describe the incident, observation, or finding in detail..."
               value={scenario}
               onChange={(e) => setScenario(e.target.value)}
             ></textarea>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleAnalyze}
               disabled={loading || !scenario}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-blue-700 transition-colors"
+              className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 hover:shadow-lg hover:shadow-blue-500/30 transition-all"
             >
               {loading ? <Loader2 className="animate-spin" /> : <ShieldAlert size={18} />}
-              Analyze Risk
-            </button>
+              {loading ? 'Analyzing...' : 'Analyze Risk'}
+            </motion.button>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8 pt-6 border-t border-slate-100">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Suggested Templates</p>
             <div className="space-y-2">
               {PRESETS.map((p, i) => (
                 <button
                   key={i}
                   onClick={() => setScenario(p)}
-                  className="w-full text-left text-xs p-2 rounded bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100 truncate"
+                  className="w-full text-left text-xs p-3 rounded-xl bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-700 border border-slate-100 hover:border-blue-200 transition-all truncate"
                 >
                   {p}
                 </button>
@@ -82,71 +86,119 @@ const RiskAuditor: React.FC = () => {
         </div>
       </div>
 
-      <div className="lg:col-span-2">
-        {!result && !loading && (
-          <div className="h-full flex flex-col items-center justify-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl p-12 text-center">
-            <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-              <Brain size={48} className="text-slate-300" />
-            </div>
-            <h3 className="text-lg font-semibold text-slate-700">Ready for Analysis</h3>
-            <p className="text-slate-400 max-w-xs mx-auto">Enter an OR scenario to the left to see potential risks and remediation steps.</p>
-          </div>
-        )}
+      <div className="lg:col-span-2 flex flex-col">
+        <AnimatePresence mode="wait">
+          {!result && !loading && (
+            <motion.div 
+              key="empty"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="flex-1 flex flex-col items-center justify-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center"
+            >
+              <div className="bg-white p-6 rounded-3xl shadow-sm mb-6 border border-slate-100">
+                <Brain size={48} className="text-slate-300" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-700 mb-2">Ready for Analysis</h3>
+              <p className="text-slate-500 max-w-sm mx-auto leading-relaxed">
+                Enter an OR scenario to the left to perform an AI-driven safety analysis mapping against QMS standards.
+              </p>
+            </motion.div>
+          )}
 
-        {loading && (
-          <div className="h-full flex flex-col items-center justify-center bg-white border border-slate-100 rounded-xl p-12">
-            <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-            <p className="text-slate-600 font-medium">Consulting QMS Standards Database...</p>
-          </div>
-        )}
+          {loading && (
+            <motion.div 
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col items-center justify-center bg-white border border-slate-100 shadow-sm rounded-2xl p-12"
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                <Loader2 className="w-16 h-16 text-blue-600 animate-spin relative z-10" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mt-6 mb-2">Analyzing Scenario</h3>
+              <p className="text-slate-500 font-medium animate-pulse">Consulting QMS Standards Database...</p>
+            </motion.div>
+          )}
 
-        {result && !loading && (
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-slate-800">Analysis Result</h3>
-                <div className={`px-4 py-1 rounded-full text-sm font-bold flex items-center gap-2 ${result.riskScore > 70 ? 'bg-rose-100 text-rose-700' :
-                  result.riskScore > 30 ? 'bg-amber-100 text-amber-700' :
-                    'bg-emerald-100 text-emerald-700'
-                  }`}>
-                  <AlertCircle size={16} />
-                  Risk Level: {result.riskScore}%
+          {result && !loading && (
+            <motion.div 
+              key="result"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6 flex-1"
+            >
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 h-full flex flex-col">
+                <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-800">Analysis Result</h3>
+                    <p className="text-slate-500 text-sm mt-1">Generated by Gemini 2.5 Safety Model</p>
+                  </div>
+                  <div className={`px-6 py-2 rounded-2xl text-lg font-bold flex items-center gap-3 border ${
+                    result.riskScore > 70 ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-rose-100' :
+                    result.riskScore > 30 ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-amber-100' :
+                    'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-emerald-100'
+                  } shadow-sm`}>
+                    <AlertCircle size={24} />
+                    Risk Score: {result.riskScore}/100
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                       <div className="p-1.5 bg-rose-100 rounded-lg text-rose-600"><AlertCircle size={16} /></div>
+                       <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Critical Findings</h4>
+                    </div>
+                    <ul className="space-y-3">
+                      {result.findings.map((f: string, i: number) => (
+                        <motion.li 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.1 }}
+                          key={i} 
+                          className="flex gap-3 text-sm text-slate-700 bg-rose-50/30 p-4 rounded-xl border border-rose-100 shadow-sm"
+                        >
+                          <span className="text-rose-500 font-bold mt-0.5">•</span>
+                          {f}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                       <div className="p-1.5 bg-emerald-100 rounded-lg text-emerald-600"><CheckCircle2 size={16} /></div>
+                       <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Remediation Steps</h4>
+                    </div>
+                    <ul className="space-y-3">
+                      {result.remediation.map((r: string, i: number) => (
+                        <motion.li 
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.1 }}
+                          key={i} 
+                          className="flex gap-3 text-sm text-slate-700 bg-emerald-50/30 p-4 rounded-xl border border-emerald-100 shadow-sm"
+                        >
+                          <span className="text-emerald-500 font-bold mt-0.5">{i + 1}.</span>
+                          {r}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-100">
+                  <button className="w-full py-4 border-2 border-slate-200 text-slate-600 hover:text-slate-800 rounded-xl font-bold hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
+                    <FileText size={18} />
+                    Export Assessment Report PDF
+                  </button>
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Critical Findings</h4>
-                  <ul className="space-y-3">
-                    {result.findings.map((f: string, i: number) => (
-                      <li key={i} className="flex gap-3 text-sm text-slate-700 bg-rose-50/50 p-3 rounded-lg border border-rose-100">
-                        <AlertCircle className="text-rose-500 flex-shrink-0" size={18} />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Remediation Steps</h4>
-                  <ul className="space-y-3">
-                    {result.remediation.map((r: string, i: number) => (
-                      <li key={i} className="flex gap-3 text-sm text-slate-700 bg-emerald-50/50 p-3 rounded-lg border border-emerald-100">
-                        <CheckCircle2 className="text-emerald-500 flex-shrink-0" size={18} />
-                        {r}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-slate-100">
-                <button className="w-full py-3 border-2 border-slate-100 text-slate-600 rounded-lg font-bold hover:bg-slate-50 transition-colors">
-                  Export Assessment PDF
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

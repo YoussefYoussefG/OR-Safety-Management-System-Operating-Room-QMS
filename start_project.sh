@@ -9,8 +9,8 @@ trap 'kill %1; exit' SIGINT
 
 # 1. Start Django Backend
 echo "Starting Django Backend..."
-source .venv/bin/activate
 cd backend
+source venv/bin/activate
 python manage.py runserver &
 BACKEND_PID=$!
 cd ..

@@ -9,9 +9,16 @@ const api = axios.create({
 
 export default api;
 
-export const fetchStandards = async () => {
-    const response = await api.get('/standards/');
-    return response.data;
+export const fetchStandards = async (params = {}) => {
+    const response = await api.get('/standards/', { params });
+    // Handle DRF pagination layout safely
+    return response.data.results ? response.data.results : response.data;
+};
+
+export const fetchIncidents = async (params = {}) => {
+    const response = await api.get('/incidents/', { params });
+    // Handle DRF pagination layout safely
+    return response.data.results ? response.data.results : response.data;
 };
 
 export const reportIncident = async (data: any) => {
