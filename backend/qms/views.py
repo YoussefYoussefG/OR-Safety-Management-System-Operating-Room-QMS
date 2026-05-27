@@ -1,9 +1,36 @@
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, generics
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .models import Standard, Incident
-from .serializers import StandardSerializer, IncidentSerializer
+from .models import Standard, Incident, Notification
+from .serializers import (
+    StandardSerializer, IncidentSerializer, 
+    UserSerializer, RegisterSerializer, NotificationSerializer
+)
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
+
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+
+class CurrentUserView(generics.RetrieveUpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def get_object(self):
+        return self.request.user
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
 
 class StandardViewSet(viewsets.ModelViewSet):
     queryset = Standard.objects.all()
@@ -20,6 +47,16 @@ class IncidentViewSet(viewsets.ModelViewSet):
     filterset_fields = ['severity', 'status', 'type']
     search_fields = ['description', 'reported_by', 'type']
     ordering_fields = ['reported_at', 'severity']
+
+    def perform_create(self, serializer):
+        incident = serializer.save()
+        if self.request.user.is_authenticated:
+            # Create a notification for the person reporting
+            Notification.objects.create(
+                user=self.request.user,
+                title="Incident Reported",
+                message=f"You successfully reported a {incident.severity} severity incident ({incident.type})."
+            )
 
 @api_view(['GET'])
 def dashboard_stats(request):
